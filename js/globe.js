@@ -10,7 +10,7 @@ d3.json('jsonData/data.json', function(err, data){
         console.log(err);
     CRUTData = data.temperature_anomaly;
     lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
-    var jsonThing = d3.select('body').append('p').html(JSON.stringify(lblCRUTData));
+    
 });
 //d3.json('jsonSchema/1850-2012.CRUT.json', function(err, data){
 d3.json('jsonSchema/schema.json', function(err, data){
@@ -121,9 +121,9 @@ planet.loadPlugin(planetaryjs.plugins.drag({
         this.plugins.autorotate.resume();
     }
 }));
-// planet.projection
-//   .scale(canvas.width / 2)
-//   .translate([canvas.width / 2, canvas.height / 2]);
-//planet.draw(canvas);
+planet.projection
+  .scale(canvas.width / 2)
+  .translate([canvas.width / 2, canvas.height / 2]);
+planet.draw(canvas);
 
 
