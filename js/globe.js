@@ -5,20 +5,16 @@ var CRUTSchema = {}; //the schema obj received from the ncdump-json JSON- childr
 var lblCRUTData = {}; //obj of year arrays of objects
 
 var avgLblData = {};
-//getUnSortData();
+//getUnSortData(); //Uncomment this for a lot of lagging fun. 
 function getUnSortData(){
     d3.json('jsonData/data.json', function(err, data){
-    //d3.json('jsonData/1850-2012.data.CRUT.json', function(err, data){
         //console.log('data receieved', data);
         if(err)
             console.log(err);
         CRUTData = data.temperature_anomaly;
         lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
-        //d3.select('body').append('div').text(JSON.stringify(lblCRUTData));
     });
-    //d3.json('jsonSchema/1850-2012.CRUT.json', function(err, data){
-    d3.json('jsonSchema/schema.json', function(err, data){
-        //console.log('schema receieved', data);
+    d3.json('jsonSchema/schema.json', function(err, data){ //This always loads first, so don't put the labelData() here. would be a good idea to JSON the other one in here or vice versa
         if(err)
             console.log(err);
         CRUTSchema = data;
@@ -34,18 +30,20 @@ function processLabelledData(data, year){
     console.log('prData', prData)
     for(var long in prData){
         for(var lat in prData[long]){
-            toRet.push({longitude: long, latitude: lat})
+            toRet.push({longitude: long, latitude: lat, avgTemp : prData[long][lat]['avg']})
         }
     }
     return toRet;
 }
+
+var geoJSONData = {};
 
 d3.json('avgLabelledData.json', function(err, data){
         if(err)
             console.log(err);
         avgLblData = data;
         console.log(data);
-        console.log(toGeoJSON(processLabelledData(avgLblData, 1999)));
+        geoJSONData = toGeoJSON(processLabelledData(avgLblData, 1999));
     });
     
 /*
@@ -136,14 +134,30 @@ In GeoJSON:
     LONG, THEN LAT
 */
 function toGeoJSON(data){ // data should be an array of data objs. 
+    var t = 2.5;
     var geoj = {"type": "FeatureCollection",
                     "features" : []
                 };
     for(var odb in data){
         geoj['features'].push({
-            
+            "type" : "Feature", 
+            "geometry": {
+                "type" : "Polygon", "coordinates" : [
+                    [
+                        [parseInt(data[odb].longitude)+t, parseInt(data[odb].latitude)+t],
+                        [parseInt(data[odb].longitude)+t, parseInt(data[odb].latitude)-t],
+                        [parseInt(data[odb].longitude)-t, parseInt(data[odb].latitude)-t],
+                        [parseInt(data[odb].longitude)-t, parseInt(data[odb].latitude)+t],
+                        [parseInt(data[odb].longitude)+t, parseInt(data[odb].latitude)+t]
+                    ]
+                ]
+            },
+            "properties" : {
+                "temperature_anomaly" : data[odb].avgTemp
+            }
         });
     }
+    return geoj;
 }
 
 function Data(lat, long, tim, _data){
