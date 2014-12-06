@@ -3,36 +3,55 @@
 var CRUTData = []; //the actual weather/climate data as an ARRAY (the array in the data obj) - will only be temperature_anomaly
 var CRUTSchema = {}; //the schema obj received from the ncdump-json JSON- children objects latitude, longitued, time
 var lblCRUTData = {}; //obj of year arrays of objects
+
+var avgLblData = {};
+//getUnSortData();
 function getUnSortData(){
     d3.json('jsonData/data.json', function(err, data){
     //d3.json('jsonData/1850-2012.data.CRUT.json', function(err, data){
-        console.log('data receieved', data);
+        //console.log('data receieved', data);
         if(err)
             console.log(err);
         CRUTData = data.temperature_anomaly;
         lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
-        //console.log(JSON.stringify(lblCRUTData));
+        //d3.select('body').append('div').text(JSON.stringify(lblCRUTData));
     });
     //d3.json('jsonSchema/1850-2012.CRUT.json', function(err, data){
     d3.json('jsonSchema/schema.json', function(err, data){
-        console.log('schema receieved', data);
+        //console.log('schema receieved', data);
         if(err)
             console.log(err);
         CRUTSchema = data;
     }) 
 } //This function shouldn't be needed bc I used it already to get teh data. Holy crap that sucked.
 
-function processLabelledData(data){
-    d3.json('avgLabelledData.json', function(err, data){
-        if(err)
-            console.log(err);
-    });
+/*
+    The data is in the year: long : lat : avg form.
+*/
+function processLabelledData(data, year){
+    var prData = data[year],
+        toRet = [];
+    console.log('prData', prData)
+    for(var long in prData){
+        for(var lat in prData[long]){
+            toRet.push({longitude: long, latitude: lat})
+        }
+    }
+    return toRet;
 }
 
-
+d3.json('avgLabelledData.json', function(err, data){
+        if(err)
+            console.log(err);
+        avgLblData = data;
+        console.log(data);
+        console.log(toGeoJSON(processLabelledData(avgLblData, 1999)));
+    });
+    
 /*
     Takes the raw ncdumped data and schema jsons and returns an object of each year's data contained within an array of the data objects
     This was used to produce avgLabelledData.json
+    should be longitude, then latitude I think.  
 */
 function labelData(data, schema){
     var lblData = {};
@@ -47,7 +66,7 @@ function labelData(data, schema){
     var avgData = {}; //object of years containing array of data objects with data. 
     avgData[currYear]={};
     //initial labelling
-    for(var i in schema.time){
+    for(var i in schema.time){ 
         for(var j in schema.longitude){
             for(var k in schema.latitude){ //0,4
                 if(schema.time[i].toString().substring(0,4) != currYear){
@@ -74,7 +93,7 @@ function labelData(data, schema){
             var loo1 = schema.longitude[loo];
             //console.log(yr, loo1)
             
-            avgData[yr][loo1] = [];
+            avgData[yr][loo1] = {};
             for(var laa in schema.latitude){
                 laa1 = schema.latitude[laa];
                 //console.log(yr, laa1, loo1);
@@ -102,8 +121,29 @@ function labelData(data, schema){
             }
         }
     }
-    console.log('avg', avgData);
+    //console.log('avg', avgData);
     return avgData;
+}
+
+/*
+In my data:
+    Lat: deg north 
+    Long: deg east
+In GeoJSON:
+    Lat: deg north
+    Long: deg east
+    
+    LONG, THEN LAT
+*/
+function toGeoJSON(data){ // data should be an array of data objs. 
+    var geoj = {"type": "FeatureCollection",
+                    "features" : []
+                };
+    for(var odb in data){
+        geoj['features'].push({
+            
+        });
+    }
 }
 
 function Data(lat, long, tim, _data){
@@ -181,6 +221,6 @@ planet.loadPlugin(planetaryjs.plugins.drag({
 planet.projection
   .scale(canvas.width / 2)
   .translate([canvas.width / 2, canvas.height / 2]);
-planet.draw(canvas);
+//planet.draw(canvas);
 
 
