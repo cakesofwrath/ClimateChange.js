@@ -9,7 +9,8 @@ d3.json('jsonData/data.json', function(err, data){
     if(err)
         console.log(err);
     CRUTData = data.temperature_anomaly;
-    labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
+    lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
+    var jsonThing = d3.select('body').append('p').html(JSON.stringify(lblCRUTData));
 });
 //d3.json('jsonSchema/1850-2012.CRUT.json', function(err, data){
 d3.json('jsonSchema/schema.json', function(err, data){
@@ -17,7 +18,7 @@ d3.json('jsonSchema/schema.json', function(err, data){
     if(err)
         console.log(err);
     CRUTSchema = data;
-})
+}) //Should functionize later
 
 
 
@@ -82,6 +83,25 @@ var autorotate = function(degreesPerSec) {
     };
   };
   
+//@author Alan
+/*
+    First attempt at writing a plugin for plotting our data.
+*/
+var drawLand = function(planet) {
+  planet.onDraw(function() {
+    planet.withSavedContext(function(context) {
+      var world = planet.plugins.topojson.world;
+      var land = topojson.feature(world, world.objects.land);
+
+      context.beginPath();
+      planet.path.context(context)(land);
+      context.fillStyle = 'white';
+      context.fill();
+    });
+  });
+};
+  
+
 var canvas = document.getElementById('globe');
 console.log(canvas);
 var planet = planetaryjs.planet();
@@ -92,16 +112,18 @@ planet.loadPlugin(planetaryjs.plugins.earth({
     borders:  {stroke: '#008000' }
 }));
 planet.loadPlugin(autorotate(10));
-    planet.loadPlugin(planetaryjs.plugins.drag({
-        onDragStart: function() {
-            this.plugins.autorotate.pause();
-        },
-        onDragEnd: function() {
-            this.plugins.autorotate.resume();
-        }
+//planet.loadPlugin(drawLand(planet));
+planet.loadPlugin(planetaryjs.plugins.drag({
+    onDragStart: function() {
+        this.plugins.autorotate.pause();
+    },
+    onDragEnd: function() {
+        this.plugins.autorotate.resume();
+    }
 }));
-planet.projection
-  .scale(canvas.width / 2)
-  .translate([canvas.width / 2, canvas.height / 2]);
-planet.draw(canvas);
-  
+// planet.projection
+//   .scale(canvas.width / 2)
+//   .translate([canvas.width / 2, canvas.height / 2]);
+//planet.draw(canvas);
+
+
