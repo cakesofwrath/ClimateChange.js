@@ -4,52 +4,13 @@ var CRUTData = []; //the actual weather/climate data as an ARRAY (the array in t
 var CRUTSchema = {}; //the schema obj received from the ncdump-json JSON- children objects latitude, longitued, time
 var lblCRUTData = {}; //obj of year arrays of objects
 
-var avgLblData = {};
-//getUnSortData(); //Uncomment this for a lot of lagging fun. 
-function getUnSortData(){
-    d3.json('jsonData/data.json', function(err, data){
-        //console.log('data receieved', data);
-        if(err)
-            console.log(err);
-        CRUTData = data.temperature_anomaly;
-        lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
-    });
-    d3.json('jsonSchema/schema.json', function(err, data){ //This always loads first, so don't put the labelData() here. would be a good idea to JSON the other one in here or vice versa
-        if(err)
-            console.log(err);
-        CRUTSchema = data;
-    }) 
-} //This function shouldn't be needed bc I used it already to get teh data. Holy crap that sucked.
-
-/*
-    The data is in the year: long : lat : avg form.
-*/
-function processLabelledData(data, year){
-    var prData = data[year],
-        toRet = [];
-    console.log('prData', prData)
-    for(var long in prData){
-        for(var lat in prData[long]){
-            toRet.push({longitude: long, latitude: lat, avgTemp : prData[long][lat]['avg']})
-        }
-    }
-    return toRet;
-}
+var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
-d3.json('avgLabelledData.json', function(err, data){
-        if(err)
-            console.log(err);
-        avgLblData = data;
-        console.log(data);
-        geoJSONData = toGeoJSON(processLabelledData(avgLblData, 1999));
-    });
-    
 /*
     Takes the raw ncdumped data and schema jsons and returns an object of each year's data contained within an array of the data objects
-    This was used to produce avgLabelledData.json
-    should be longitude, then latitude I think.  
+    This was used to produce avgLabelledData.json 
 */
 function labelData(data, schema){
     var lblData = {};
@@ -84,7 +45,7 @@ function labelData(data, schema){
     }
 
     
-    console.log(avgData);
+    //console.log(avgData);
     //averaging Data
     for(var yr in lblData){
         for(var loo in schema.longitude){
@@ -123,6 +84,42 @@ function labelData(data, schema){
     return avgData;
 }
 
+//getUnSortData(); //Uncomment this for a lot of lagging fun. 
+function getUnSortData(){
+    d3.json('jsonData/data.json', function(err, data){
+        //console.log('data receieved', data);
+        if(err)
+            console.log(err);
+        CRUTData = data.temperature_anomaly;
+        lblCRUTData = labelData(CRUTData, CRUTSchema); //make sure we call this AFTER we json this stuff (JS is async)
+        getAllGeoJSON(2005);
+        toTopoJSON();
+        console.log(avgGeoJSONData)
+        drawGlobe();
+    });
+    d3.json('jsonSchema/schema.json', function(err, data){ //This always loads first, so don't put the labelData() here. would be a good idea to JSON the other one in here or vice versa
+        if(err)
+            console.log(err);
+        CRUTSchema = data;
+    }) 
+} //This function shouldn't be needed bc I used it already to get teh data. Holy crap that sucked.
+
+/*
+    The data is in the year: long : lat : avg form.
+*/
+function processLabelledData(data, year){ //will be need to run more than once, averages the temps for one year.
+    var prData = data[year],
+        toRet = [];
+    //console.log('prData', prData)
+    for(var long in prData){
+        for(var lat in prData[long]){
+            toRet.push({longitude: long, latitude: lat, avgTemp : prData[long][lat].avg})
+        }
+    }
+    //console.log('toRet', toRet)
+    return toRet;
+}
+
 /*
 In my data:
     Lat: deg north 
@@ -132,8 +129,11 @@ In GeoJSON:
     Long: deg east
     
     LONG, THEN LAT
+    
+    data should be an array of data objs. 
+    returns a GeoJSON object of that one year.
 */
-function toGeoJSON(data){ // data should be an array of data objs. 
+function toGeoJSON(data){ 
     var t = 2.5;
     var geoj = {"type": "FeatureCollection",
                     "features" : []
@@ -160,12 +160,40 @@ function toGeoJSON(data){ // data should be an array of data objs.
     return geoj;
 }
 
+function toTopoJSON(){ // don't use.
+        /*d3.json('avgLabelledData.json', function(err, data){
+            if(err)
+                console.log(err);
+            avgLblData = data;
+            //console.log('data', data);
+            
+            temps(geoJSON);
+            console.log('geoJSON', geoJSONData);*/
+            d3.json('topojsons/HadCRUT4.json', function(err, data) { //this is only for one year, so I'm loading it outside the function
+                if(err)
+                    console.log(err);
+                CRUTtopoJSON = data;
+                console.log('crut', CRUTtopoJSON)
+                
+            //});
+        
+    });
+}
+
+function getAllGeoJSON(year) {
+    
+    avgGeoJSONData = toGeoJSON(processLabelledData(lblCRUTData, year));
+    
+}
+
 function Data(lat, long, tim, _data){
     this.latitude = lat;
     this.longitude = long;
     this.time = tim;
     this.data = _data;
 }
+
+getUnSortData();
 
 //@author Kevin
 var autorotate = function(degreesPerSec) {
@@ -193,48 +221,71 @@ var autorotate = function(degreesPerSec) {
       });
     };
   };
+
+var colors = d3.scale.linear()
+      .domain([-3, 3])
+      .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"]);
+
+
+var CRUTtopoJSON = {};
+var i=0;
+var somePlugin = function(planet) {
+  console.log(avgGeoJSONData);
   
-//@author Alan
-/*
-    First attempt at writing a plugin for plotting our data.
-*/
-var drawLand = function(planet) {
   planet.onDraw(function() {
+    
+    
     planet.withSavedContext(function(context) {
       var world = planet.plugins.topojson.world;
-      var land = topojson.feature(world, world.objects.land);
-
+      var features = topojson.feature(CRUTtopoJSON, CRUTtopoJSON.objects.collection);
+      if(i == 0)  {
+        console.log(planet.plugins.topojson.world)
+        console.log(features);
+        i++;  
+      }
+      //var features = avgGeoJSONData;
+      //console.log(context);
       context.beginPath();
+      planet.path.context(context)(features);
+      context.fillStyle = 'blue';
+      context.lineWidth = .03;
+      context.fill();
+      /*var world = planet.plugins.topojson.world;
+      var land = topojson.feature(world, world.objects.land);
       planet.path.context(context)(land);
       context.fillStyle = 'white';
-      context.fill();
+      context.fill();*/
     });
   });
 };
-  
 
-var canvas = document.getElementById('globe');
-console.log(canvas);
-var planet = planetaryjs.planet();
-planet.loadPlugin(planetaryjs.plugins.earth({
-    topojson: {file : 'jsonData/world-110m.json'},
-    oceans:   {fill:   '#000080' },
-    land:     {fill:   '#339966' },
-    borders:  {stroke: '#008000' }
-}));
-planet.loadPlugin(autorotate(10));
-//planet.loadPlugin(drawLand(planet));
-planet.loadPlugin(planetaryjs.plugins.drag({
-    onDragStart: function() {
-        this.plugins.autorotate.pause();
-    },
-    onDragEnd: function() {
-        this.plugins.autorotate.resume();
-    }
-}));
-planet.projection
-  .scale(canvas.width / 2)
-  .translate([canvas.width / 2, canvas.height / 2]);
-//planet.draw(canvas);
-
-
+function drawGlobe(){
+    var canvas = document.getElementById('globe');
+    var planet = planetaryjs.planet();
+    planet.loadPlugin(planetaryjs.plugins.earth({
+        topojson: {file : 'jsonData/world-110m.json'},
+        oceans:   {fill:   '#000080' },
+        land:     {fill:   '#339966' },
+        borders:  {stroke: '#008000' }
+    }));
+    //planet.loadPlugin(autorotate(10));
+    //planet.loadPlugin(drawLand(planet));
+    planet.loadPlugin(planetaryjs.plugins.drag({
+        onDragStart: function() {
+            this.plugins.autorotate.pause();
+        },
+        onDragEnd: function() {
+            this.plugins.autorotate.resume();
+        }
+    }));
+    planet.loadPlugin(somePlugin);
+    
+    //planet.loadPlugin(tempPlot(CRUTtopoJSON));
+    // planetaryjs.plugins.topojson({
+    //   file: '/topojsons/HadCRUT4.json'
+    // });
+    planet.projection
+      .scale(canvas.width / 2)
+      .translate([canvas.width / 2, canvas.height / 2]);
+    planet.draw(canvas);
+}
