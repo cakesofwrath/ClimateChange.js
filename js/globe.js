@@ -8,6 +8,23 @@ var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
+getRawData();
+
+/*
+    Should be only run once or twice to get the raw data for processing.
+*/
+function getRawData() {
+    d3.json('data/jsonData/data.json', function(err, data) {
+        if(err) console.error(err);
+        CRUTData = data.temperature_anomaly; console.log('data retrieved')
+        d3.json('data/jsonSchema/schema.json', function(err, data) {
+            if(err) console.error(err);
+            CRUTSchema = data; console.log('schema retrieved')
+            saveDataAsGeoJSON();
+        });
+    });
+}
+
 /*
     Preconditions: data and schema are CRUTData and CRUTSchema, basically.
     This thing will only be run a few times to pass on the correct file, and then never again.
@@ -45,9 +62,9 @@ var processRaw = function(data, schema) {
     
     for(var yr in avgLbData) { //I swear to god, bogosort is a better algorithm than this 
         for(var long in schema.longitude) {
-            avgLbData[yr][long] = {};
+            avgLbData[yr][schema.longitude[long]] = {};
             for(var lat in schema.latitude) {
-                avgData[yr][schema.longitude[long]][schema.latitude[lat]] = { sum : 0, avg : 0, ct : 0 };
+                avgLbData[yr][schema.longitude[long]][schema.latitude[lat]] = { sum : 0, avg : 0, ct : 0 };
             }
         }
         for(var m in fullLbData[yr]) { //These loops are for calculating sum and number of data points.
@@ -128,7 +145,7 @@ function labelData(data, schema){
             for(var d in lblData[yr][m]){
                 var laat = lblData[yr][m][d]["latitude"], 
                     loong = lblData[yr][m][d]["longitude"];
-                
+                console.log(avgData)
                 avgData[yr][loong][laat]['sum'] += lblData[yr][m][d]["data"];
                 avgData[yr][loong][laat]['ct']++;
             }
@@ -150,13 +167,14 @@ function labelData(data, schema){
 
 /*
     this will return the geoJSON for one year.
+    Should only be called by saveDataAsGeoJSON()
 */
 var processOneYear = function(data, year) {
     var yearData = data[year],
-        geoJSONtoRet = {};
-        
+        geoJSONtoRet = {"type": "FeatureCollection",
+                        "features" : []
+                        }; 
     var t = 2.5; //Each lat/long is a 5deg/5deg square with the point in the middle
-    
     for(var long in yearData) {
         for(var lat in yearData[long]) {
             geoJSONtoRet['features'].push({ //Geojson format
@@ -181,13 +199,32 @@ var processOneYear = function(data, year) {
     return geoJSONtoRet;
 };
 
-var saveDataAsGeoJSON = function(_data) {
+/*
+    This will save a geojson file for each year.
+    Input should be the labelled averaged data.
+*/
+var saveDataAsGeoJSON = function() {
+    console.log('beginning saving');
     //TODO: save each file to topojsons folder?
+    var labelledData = processRaw(CRUTData, CRUTSchema);
+    
+    //for(var y in labelledData) {
+    var ctDL = 0;
+    for(var b = 1870; b<2014; b++){ //1998 is already downloaded
+        var geoJ = new Blob([JSON.stringify(processOneYear(labelledData, b))], {type: "application/json; charset=utf-8"});
+        saveAs(geoJ, b+'_temp_anomaly_geojson.json');
+        ctDL++;
+        if(ctDL > 9)
+            break;
+    }
+    
 };
+
+
 
 //getUnSortData(); //Uncomment this for a lot of lagging fun. 
 function getUnSortData(){
-    d3.json('jsonData/data.json', function(err, data){
+    d3.json('data/jsonData/data.json', function(err, data){
         //console.log('data receieved', data);
         if(err)
             console.log(err);
@@ -196,9 +233,9 @@ function getUnSortData(){
         getAllGeoJSON(2005);
         toTopoJSON();
         console.log(avgGeoJSONData)
-        drawGlobe();
+        //drawGlobe();
     });
-    d3.json('jsonSchema/schema.json', function(err, data){ //This always loads first, so don't put the labelData() here. would be a good idea to JSON the other one in here or vice versa
+    d3.json('data/jsonSchema/schema.json', function(err, data){ //This always loads first, so don't put the labelData() here. would be a good idea to JSON the other one in here or vice versa
         if(err)
             console.log(err);
         CRUTSchema = data;
@@ -273,7 +310,7 @@ function toTopoJSON(){ // don't use.
             
             temps(geoJSON);
             console.log('geoJSON', geoJSONData);*/
-            d3.json('topojsons/HadCRUT4.json', function(err, data) { //this is only for one year, so I'm loading it outside the function
+            d3.json('data/topojsons/HadCRUT4.json', function(err, data) { //this is only for one year, so I'm loading it outside the function
                 if(err)
                     console.log(err);
                 CRUTtopoJSON = data;
@@ -326,9 +363,7 @@ var autorotate = function(degreesPerSec) {
     };
   };
 
-var colors = d3.scale.linear()
-          .domain([-.05, .05])
-      .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
+
 
 
 var CRUTtopoJSON = {};
@@ -339,8 +374,9 @@ var somePlugin = function(planet) {
   planet.onDraw(function() {
     planet.withSavedContext(function(context) {
       var world = planet.plugins.topojson.world;
-      //var features = topojson.feature(CRUTtopoJSON, CRUTtopoJSON.objects.collection).features[1000];
-      
+      var colors = d3.scale.linear()
+          .domain([-.05, .05])
+          .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
       var features = avgGeoJSONData.features;
       for(var c in avgGeoJSONData.features) {
           var feature=features[c];
@@ -377,7 +413,7 @@ function drawGlobe(){
     var canvas = document.getElementById('globe');
     var planet = planetaryjs.planet();
     planet.loadPlugin(planetaryjs.plugins.earth({
-        topojson: {file : 'jsonData/world-110m.json'},
+        topojson: {file : 'data/jsonData/world-110m.json'},
         oceans:   {fill:   '#000080' },
         land:     {fill:   '#339966' },
         borders:  {stroke: '#008000' }
