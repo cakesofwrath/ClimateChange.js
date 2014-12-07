@@ -9,6 +9,70 @@ var avgGeoJSONData = {}; //single year's geojson
 var geoJSONData = {};
 
 /*
+    Preconditions: data and schema are CRUTData and CRUTSchema, basically.
+    This thing will only be run a few times to pass on the correct file, and then never again.
+    Takes raw ncdumped data and schema (-c) jsons and returns an object of each year's data containing an array of data objects.
+*/
+var processRaw = function(data, schema) {
+    var fullLbData = {}, //this is computed first. It is the entire file, labelled
+        avgLbData = {}; //This is first initialized correctly, then computed
+    var currYear = schema.time[0].toString().substring(0, 4),
+        currMonth = schema.time[0].toString().substring(5, 7);
+    fullLbData[currYear] = {};
+    fullLbData[currYear][currMonth] = []; //An array of data objects.
+    avgLbData[currYear] = {};
+    var index = 0; //pointer w/in the unlabelled data array.
+    
+    for(var t in schema.time) { //Triple for loops hurt my eyes. I wonder what Haskell programmers think of them.
+        for(var long in schema.longitude) { //These loops are labelling the full data and initializing the averaged data.
+            for(var lat in schema.latitude) {
+                if(schema.time[t].toString().substring(0, 4) != currYear) { //If we've come upon a new year of data
+                    currYear = schema.time[t].toString().substring(0, 4);
+                    fullLbData[currYear] = {};
+                    avgLbData[currYear] = {};
+                }
+                if(schema.time[t].toString().substring(5, 7) != currMonth) { //If we've come upon a new month of data
+                    currMonth = schema.time[t].toString().substring(5, 7);
+                    fullLbData[currYear][currMonth] = [];
+                }
+                if(data[index]) //Only save non-null values
+                    fullLbData[currYear][currMonth].push(new Data(schema.longitude[long], schema.latitude[lat], schema.time[t], data[index]));
+                
+                index++; //Advance index regardless.
+            }
+        }
+    }
+    
+    for(var yr in avgLbData) { //I swear to god, bogosort is a better algorithm than this 
+        for(var long in schema.longitude) {
+            avgLbData[yr][long] = {};
+            for(var lat in schema.latitude) {
+                avgData[yr][schema.longitude[long]][schema.latitude[lat]] = { sum : 0, avg : 0, ct : 0 };
+            }
+        }
+        for(var m in fullLbData[yr]) { //These loops are for calculating sum and number of data points.
+            for(var d in fullLbData[yr][m]) {
+                var laat = fullLbData[yr][m][d]["latitude"], //These are for accessing the avg's data.
+                    loong = fullLbData[yr][m][d]["longitude"];
+                
+                avgLbData[yr][loong][laat]['sum'] += fullLbData[yr][m][d]["data"];
+                avgLbData[yr][loong][laat]['ct']++;
+            }
+        }
+        for(var yr in avgLbData) { //FINALLY, calculates the average.
+            for(var long in avgLbData[yr]) {
+                for(var lat in avgLbData[yr][long]) {
+                    avgLbData[yr][long][lat]['avg'] = avgLbData[yr][long][lat]['sum'] / avgLbData[yr][long][lat]['ct']; 
+                    delete avgLbData[yr][long][lat]['sum'];
+                    delete avgLbData[yr][long][lat]['ct'];
+                }
+            }
+        }
+    }
+    return avgLbData;
+}
+
+/*
     Takes the raw ncdumped data and schema jsons and returns an object of each year's data contained within an array of the data objects
     This was used to produce avgLabelledData.json 
 */
@@ -84,6 +148,43 @@ function labelData(data, schema){
     return avgData;
 }
 
+/*
+    this will return the geoJSON for one year.
+*/
+var processOneYear = function(data, year) {
+    var yearData = data[year],
+        geoJSONtoRet = {};
+        
+    var t = 2.5; //Each lat/long is a 5deg/5deg square with the point in the middle
+    
+    for(var long in yearData) {
+        for(var lat in yearData[long]) {
+            geoJSONtoRet['features'].push({ //Geojson format
+                "type" : "Feature", 
+                "geometry": {
+                    "type" : "Polygon", "coordinates" : [
+                        [
+                            [parseInt(long)+t, parseInt(lat)+t],
+                            [parseInt(long)+t, parseInt(lat)-t],
+                            [parseInt(long)-t, parseInt(lat)-t],
+                            [parseInt(long)-t, parseInt(lat)+t],
+                            [parseInt(long)+t, parseInt(lat)+t]
+                        ]
+                    ]
+                },
+                "properties" : {
+                    "temperature_anomaly" : yearData[long][lat].avg
+                }
+            });
+        }
+    }
+    return geoJSONtoRet;
+};
+
+var saveDataAsGeoJSON = function(_data) {
+    //TODO: save each file to topojsons folder?
+};
+
 //getUnSortData(); //Uncomment this for a lot of lagging fun. 
 function getUnSortData(){
     d3.json('jsonData/data.json', function(err, data){
@@ -113,12 +214,15 @@ function processLabelledData(data, year){ //will be need to run more than once, 
     //console.log('prData', prData)
     for(var long in prData){
         for(var lat in prData[long]){
-            toRet.push({longitude: long, latitude: lat, avgTemp : prData[long][lat].avg})
+            
+            toRet.push({longitude: long, latitude: lat, avgTemp : prData[long][lat].avg});
         }
     }
     //console.log('toRet', toRet)
     return toRet;
 }
+
+
 
 /*
 In my data:
@@ -186,14 +290,14 @@ function getAllGeoJSON(year) {
     
 }
 
-function Data(lat, long, tim, _data){
+function Data(long, lat, tim, _data){
     this.latitude = lat;
     this.longitude = long;
     this.time = tim;
     this.data = _data;
 }
 
-getUnSortData();
+//getUnSortData();
 
 //@author Kevin
 var autorotate = function(degreesPerSec) {
