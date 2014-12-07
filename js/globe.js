@@ -474,10 +474,11 @@ var somePlugin = function(planet) {
 };
 
 
+var canvas = document.getElementById('globe');
+var planet = planetaryjs.planet();
 
 function drawGlobe(){
-    var canvas = document.getElementById('globe');
-    var planet = planetaryjs.planet();
+    
     planet.loadPlugin(somePlugin);
     planet.loadPlugin(planetaryjs.plugins.topojson({
         file: 'data/jsonData/world-110m.json'
@@ -508,15 +509,22 @@ function drawGlobe(){
 }
 
 var slider = d3.select('body').select("#slider");
-slider.call(d3.slider().axis(true).min(1850).max(2013).step(1).on("slide", function(evt, value) {
+slider.call(d3.slider().axis(true).min(1850).max(2013).step(1)/*.drag.on("dragend", function(evt, value) {
+    planet.plugins.autorotate.pause();
+    d3.select('body').select('#globe').attr('display', 'none');
+
     d3.select('#year').text(value);   
     currentYear = value;
+    
     try{
         getGeoJSON(currentYear);
     }
     catch(e){
         alert("Error loading data: ", e);
     }
-}))
+    planet.plugins.autorotate.resume();
+})*/); console.log(d3.slider().axis(true).min(1850).max(2013).step(1));
+
+
 
 getGeoJSON(1850);
