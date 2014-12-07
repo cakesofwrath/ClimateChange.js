@@ -8,7 +8,7 @@ var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
-getRawData();
+//getRawData();
 
 /*
     Should be only run once or twice to get the raw data for processing.
@@ -21,15 +21,28 @@ function getRawData() {
             if(err) console.error(err);
             CRUTSchema = data; console.log('schema retrieved')
             saveDataAsGeoJSON();
+            drawGlobe();
         });
     });
 }
+
+var getGeoJSON = function(year) {
+    d3.json('data/geojsons/' + year + '_temp_anomaly_geojson.json', function(err, data) {
+        if(err) console.error(err);
+        avgGeoJSONData = data;
+        console.log(data);
+        drawGlobe();
+    });
+};
+
+getGeoJSON(2013);
 
 /*
     Preconditions: data and schema are CRUTData and CRUTSchema, basically.
     This thing will only be run a few times to pass on the correct file, and then never again.
     Takes raw ncdumped data and schema (-c) jsons and returns an object of each year's data containing an array of data objects.
 */
+var b = 0;
 var processRaw = function(data, schema) {
     var fullLbData = {}, //this is computed first. It is the entire file, labelled
         avgLbData = {}; //This is first initialized correctly, then computed
@@ -59,33 +72,45 @@ var processRaw = function(data, schema) {
             }
         }
     }
-    
+    var b = 0;
     for(var yr in avgLbData) { //I swear to god, bogosort is a better algorithm than this 
         for(var long in schema.longitude) {
             avgLbData[yr][schema.longitude[long]] = {};
             for(var lat in schema.latitude) {
-                avgLbData[yr][schema.longitude[long]][schema.latitude[lat]] = { sum : 0, avg : 0, ct : 0 };
+                avgLbData[yr][schema.longitude[long]][schema.latitude[lat]] = { sum : 0.0, avg : 0.0, ct : 0.0 };
             }
         }
+        //console.log(fullLbData);
         for(var m in fullLbData[yr]) { //These loops are for calculating sum and number of data points.
             for(var d in fullLbData[yr][m]) {
                 var laat = fullLbData[yr][m][d]["latitude"], //These are for accessing the avg's data.
                     loong = fullLbData[yr][m][d]["longitude"];
-                
+                if(b < 9)
+                        console.log(avgLbData[yr])
+                        //console.log(avgLbData[yrrr][loooong][laaat]['sum'], avgLbData[yrrr][loooong][laaat]['ct'])
+                b++;
                 avgLbData[yr][loong][laat]['sum'] += fullLbData[yr][m][d]["data"];
                 avgLbData[yr][loong][laat]['ct']++;
             }
         }
-        for(var yr in avgLbData) { //FINALLY, calculates the average.
-            for(var long in avgLbData[yr]) {
-                for(var lat in avgLbData[yr][long]) {
-                    avgLbData[yr][long][lat]['avg'] = avgLbData[yr][long][lat]['sum'] / avgLbData[yr][long][lat]['ct']; 
-                    delete avgLbData[yr][long][lat]['sum'];
-                    delete avgLbData[yr][long][lat]['ct'];
+        //console.log('before last loop')
+        
+        for(var yrrr in avgLbData) { //FINALLY, calculates the average.
+            for(var loooong in avgLbData[yrrr]) {
+                for(var laaat in avgLbData[yrrr][loooong]) {
+                    if(b < 9)
+                        console.log(avgLbData[yrrr], loooong, laaat)
+                        //console.log(avgLbData[yrrr][loooong][laaat]['sum'], avgLbData[yrrr][loooong][laaat]['ct'])
+                    b++;
+                    avgLbData[yrrr][loooong][laaat]['avg'] = avgLbData[yrrr][loooong][laaat]['sum'] / avgLbData[yrrr][loooong][laaat]['ct']; 
+                    //console.log('hai')
+                    //delete avgLbData[yr][loooong][laaat]['sum'];
+                    //delete avgLbData[yr][loooong][laaat]['ct'];
                 }
             }
         }
     }
+    console.log(avgLbData);
     return avgLbData;
 }
 
@@ -124,8 +149,6 @@ function labelData(data, schema){
             }
         }
     }
-
-    
     //console.log(avgData);
     //averaging Data
     for(var yr in lblData){
@@ -154,7 +177,8 @@ function labelData(data, schema){
     for(var yrr in avgData){
         for(var laaat in avgData[yrr]){
             for(var looong in avgData[yrr][laaat]){
-                //console.log(avgData[yrr][laaat][looong])
+                if(b < 15)
+                console.log(avgData[yrr][laaat][looong]['sum'] / avgData[yrr][laaat][looong]['ct'])
                 avgData[yrr][laaat][looong]['avg'] = avgData[yrr][laaat][looong]['sum'] / avgData[yrr][laaat][looong]['ct'];
                 delete avgData[yrr][laaat][looong]['sum'];
                 delete avgData[yrr][laaat][looong]['ct'];
@@ -174,6 +198,7 @@ var processOneYear = function(data, year) {
         geoJSONtoRet = {"type": "FeatureCollection",
                         "features" : []
                         }; 
+    //console.log(yearData);
     var t = 2.5; //Each lat/long is a 5deg/5deg square with the point in the middle
     for(var long in yearData) {
         for(var lat in yearData[long]) {
@@ -191,7 +216,7 @@ var processOneYear = function(data, year) {
                     ]
                 },
                 "properties" : {
-                    "temperature_anomaly" : yearData[long][lat].avg
+                    "temperature_anomaly" : yearData[long][lat]['avg']
                 }
             });
         }
@@ -207,17 +232,18 @@ var saveDataAsGeoJSON = function() {
     console.log('beginning saving');
     //TODO: save each file to topojsons folder?
     var labelledData = processRaw(CRUTData, CRUTSchema);
-    
+    //var labelledData = labelData(CRUTData, CRUTSchema)
     //for(var y in labelledData) {
     var ctDL = 0;
-    for(var b = 1870; b<2014; b++){ //1998 is already downloaded
+    for(var b = 2013; b<2014; b++){ //1998 is already downloaded
         var geoJ = new Blob([JSON.stringify(processOneYear(labelledData, b))], {type: "application/json; charset=utf-8"});
         saveAs(geoJ, b+'_temp_anomaly_geojson.json');
         ctDL++;
-        if(ctDL > 9)
+        if(ctDL > 1)
             break;
     }
-    
+    //avgGeoJSONData = processOneYear(labelledData, 1959);
+    //drawGlobe();
 };
 
 
@@ -334,7 +360,6 @@ function Data(long, lat, tim, _data){
     this.data = _data;
 }
 
-//getUnSortData();
 
 //@author Kevin
 var autorotate = function(degreesPerSec) {
@@ -375,15 +400,15 @@ var somePlugin = function(planet) {
     planet.withSavedContext(function(context) {
       var world = planet.plugins.topojson.world;
       var colors = d3.scale.linear()
-          .domain([-.05, .05])
+          .domain([-.2, .2])
           .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
       var features = avgGeoJSONData.features;
       for(var c in avgGeoJSONData.features) {
           var feature=features[c];
           //console.log(c, features)
-          if(i == 0)  {
+          if(i == 1000)  {
             //console.log(planet.plugins.topojson.world)
-            console.log(feature);
+            //console.log(feature);
           }
           i++;  
           //console.log(context);
@@ -408,6 +433,8 @@ var somePlugin = function(planet) {
     });
   });
 };
+
+
 
 function drawGlobe(){
     var canvas = document.getElementById('globe');
