@@ -8,6 +8,8 @@ var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
+var currentYear = 1850;
+
 //getRawData();
 
 /*
@@ -30,12 +32,12 @@ var getGeoJSON = function(year) {
     d3.json('data/geojsons/' + year + '_temp_anomaly_geojson.json', function(err, data) {
         if(err) console.error(err);
         avgGeoJSONData = data;
-        console.log(data);
+        //console.log(data);
         drawGlobe();
     });
 };
 
-getGeoJSON(2013);
+
 
 /*
     Preconditions: data and schema are CRUTData and CRUTSchema, basically.
@@ -388,8 +390,48 @@ var autorotate = function(degreesPerSec) {
     };
   };
 
+// Plugin to resize the canvas to fill the window and to
+// automatically center the planet when the window size changes
+function autocenter(options) {
+    options = options || {};
+    var needsCentering = false;
+    var globe = null;
+    
+    var resize = function() {
+      var width  = window.innerWidth + (options.extraWidth || 0);
+      var height = window.innerHeight + (options.extraHeight || 0);
+      globe.canvas.width = width;
+      globe.canvas.height = height;
+      globe.projection.translate([width / 2, height / 2]);
+    };
+    
+    return function(planet) {
+      globe = planet;
+      planet.onInit(function() {
+        needsCentering = true;
+        d3.select(window).on('resize', function() {
+          needsCentering = true;
+        });
+      });
+    
+      planet.onDraw(function() {
+        if (needsCentering) { resize(); needsCentering = false; }
+      });
+    };
+};
 
-
+// Plugin to automatically scale the planet's projection based
+  // on the window size when the planet is initialized
+function autoscale(options) {
+    options = options || {};
+    return function(planet) {
+      planet.onInit(function() {
+        var width  = window.innerWidth + (options.extraWidth || 0);
+        var height = window.innerHeight + (options.extraHeight || 0);
+        planet.projection.scale(Math.min(width, height) / 2);
+      });
+    };
+};
 
 var CRUTtopoJSON = {};
 var i=0;
@@ -400,8 +442,11 @@ var somePlugin = function(planet) {
     planet.withSavedContext(function(context) {
       var world = planet.plugins.topojson.world;
       var colors = d3.scale.linear()
-          .domain([-.2, .2])
-          .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
+          .domain([-.8, -.6, -.4, -.2, 0, .2, .4, .6, .8])
+          .range(["#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac"]);
+          //.range(["#fddbc7","#f7f7f7", "#d1e5f0"]);
+          //.range(["#ca0020","#f4a582","#f7f7f7","#92c5de","#0571b0"]);
+          //.range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
       var features = avgGeoJSONData.features;
       for(var c in avgGeoJSONData.features) {
           var feature=features[c];
@@ -414,14 +459,9 @@ var somePlugin = function(planet) {
           //console.log(context);
           context.beginPath();
           planet.path.context(context)(feature);
-          context.fillStyle = colors(avgGeoJSONData.features[c].properties.temperature_anomaly) || "grey";
+          context.fillStyle = colors(avgGeoJSONData.features[c].properties.temperature_anomaly ) || "grey";
           context.strokeStyle = '#C0C0C0';
-          context.setLineWidth(.25)
-          //context.draw();
-          var world = planet.plugins.topojson.world;
-          //var land = topojson.feature(world, world.objects.land);
-          //planet.path.context(context)(land);
-          //context.fillStyle = 'white';
+          context.setLineWidth(.25);
           context.fill();  
       }
         /*var features = avgGeoJSONData.features[1000];
@@ -439,12 +479,18 @@ var somePlugin = function(planet) {
 function drawGlobe(){
     var canvas = document.getElementById('globe');
     var planet = planetaryjs.planet();
-    planet.loadPlugin(planetaryjs.plugins.earth({
-        topojson: {file : 'data/jsonData/world-110m.json'},
-        oceans:   {fill:   '#000080' },
-        land:     {fill:   '#339966' },
-        borders:  {stroke: '#008000' }
+    planet.loadPlugin(somePlugin);
+    planet.loadPlugin(planetaryjs.plugins.topojson({
+        file: 'data/jsonData/world-110m.json'
     }));
+    /*planet.loadPlugin(planetaryjs.plugins.zoom({
+          scaleExtent: [300, 500]
+    }))*/
+    planet.loadPlugin(planetaryjs.plugins.borders({
+        stroke: '#000', lineWidth: 1.7, type: 'both'
+    }));
+    planet.loadPlugin(autocenter({extraHeight: -52}));
+    planet.loadPlugin(autoscale({extraHeight: -52}));
     planet.loadPlugin(autorotate(10));
     //planet.loadPlugin(drawLand(planet));
     planet.loadPlugin(planetaryjs.plugins.drag({
@@ -455,14 +501,23 @@ function drawGlobe(){
             this.plugins.autorotate.resume();
         }
     }));
-    planet.loadPlugin(somePlugin);
     
-    //planet.loadPlugin(tempPlot(CRUTtopoJSON));
-    // planetaryjs.plugins.topojson({
-    //   file: '/topojsons/HadCRUT4.json'
-    // });
     planet.projection
       .scale(canvas.width / 2)
       .translate([canvas.width / 2, canvas.height / 2]);
     planet.draw(canvas);
 }
+
+var slider = d3.select('body').select("#slider");
+slider.call(d3.slider().axis(true).min(1850).max(2013).step(1).on("slide", function(evt, value) {
+    d3.select('#year').text(value);   
+    currentYear = value;
+    try{
+        getGeoJSON(currentYear);
+    }
+    catch(e){
+        alert("Error loading data: ", e);
+    }
+}))
+
+getGeoJSON(2013);

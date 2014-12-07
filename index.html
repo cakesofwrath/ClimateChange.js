@@ -6,13 +6,54 @@
     <script src="resources/topojson.v1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="resources/planetaryjs.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="resources/FileSaver.min.js" type="text/javascript" charset="utf-8"></script>
-    <!--<link href="styles.css" rel="stylesheet" type="text/css">-->
+    <script src="resources/d3.slider.js" type="text/javascript" charset="utf-8"></script>
+    <link href="styles.css" rel="stylesheet" type="text/css">
+    <link href="resources/d3.slider.css" rel="stylesheet" type="text/css" charset="utf-8">
 </head>
 <body>
-    <canvas id='globe' width='800' height='800'></canvas>
+    <style>
+        #slider {
+            margin-top: 15px;
+            position: absolute;
+            z-index: 4;
+            width: 90%;
+            height: 17px;
+            bottom: 22px;
+            left: 5%;
+            
+        }
+        #year {
+            position: absolute;
+            width: 100px;
+            height: 30px;
+            top: 15px;
+            left: 15px;
+            font-size: 30px;
+            fill: white;
+            color: white;
+            
+        }
+        
+        #about {
+            position: absolute;    
+        }
+        
+        .tick {
+            fill: white;
+        }
+        canvas #globe {
+            width: 750px;
+            height: 750px;
+            position: absolute;
+            z-index: -1;
+        }
+    </style>
+    <div id="year">1850</div>
+    <canvas id='globe' ></canvas>
+    <div id="slider"></div>
     <script src="js/globe.js" type="text/javascript" charset="utf-8"></script> <!-- This is here b/c the js references the body explicitly or something -->
-    <!--<script src="js/star.js" type="text/javascript" charset="utf-8"></script>-->
+    <script src="js/star.js" type="text/javascript" charset="utf-8"></script>
     <script>
-        //var stars = starPlace();
+        var stars = starPlace();
     </script>
 </body>
