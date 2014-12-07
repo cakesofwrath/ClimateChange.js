@@ -8,7 +8,7 @@ var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
-//getRawData();
+getRawData();
 
 /*
     Should be only run once or twice to get the raw data for processing.
@@ -35,7 +35,7 @@ var getGeoJSON = function(year) {
     });
 };
 
-getGeoJSON(2013);
+//getGeoJSON(2013);
 
 /*
     Preconditions: data and schema are CRUTData and CRUTSchema, basically.
@@ -235,11 +235,11 @@ var saveDataAsGeoJSON = function() {
     //var labelledData = labelData(CRUTData, CRUTSchema)
     //for(var y in labelledData) {
     var ctDL = 0;
-    for(var b = 2013; b<2014; b++){ //1998 is already downloaded
+    for(var b = 2010; b<2014; b++){ //1998 is already downloaded
         var geoJ = new Blob([JSON.stringify(processOneYear(labelledData, b))], {type: "application/json; charset=utf-8"});
         saveAs(geoJ, b+'_temp_anomaly_geojson.json');
         ctDL++;
-        if(ctDL > 1)
+        if(ctDL > 4)
             break;
     }
     //avgGeoJSONData = processOneYear(labelledData, 1959);
