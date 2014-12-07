@@ -329,21 +329,21 @@ function toGeoJSON(data){
 }
 
 function toTopoJSON(){ // don't use.
-        /*d3.json('avgLabelledData.json', function(err, data){
+        d3.json('avgLabelledData.json', function(err, data){
             if(err)
                 console.log(err);
             avgLblData = data;
             //console.log('data', data);
             
             temps(geoJSON);
-            console.log('geoJSON', geoJSONData);*/
+            console.log('geoJSON', geoJSONData);
             d3.json('data/topojsons/HadCRUT4.json', function(err, data) { //this is only for one year, so I'm loading it outside the function
                 if(err)
                     console.log(err);
                 CRUTtopoJSON = data;
                 console.log('crut', CRUTtopoJSON)
                 
-            //});
+            });
         
     });
 }
@@ -509,21 +509,42 @@ function drawGlobe(){
 }
 
 var slider = d3.select('body').select("#slider");
-slider.call(d3.slider().axis(true).min(1850).max(2013).step(1)/*.drag.on("dragend", function(evt, value) {
+var scale = d3.scale.linear().range([1800, 2013]);
+var axis = d3.svg.axis(slider).scale(scale).tickSize(10);
+
+d3.select("body").append("svg")
+    .attr("class", "axis")
+    .attr("width", "90%")
+    .attr("height", 17)
+  .append("g")
+    .attr("transform", "translate(0,0)")
+    .call(axis);
+//var sliderAxis = d3.
+var drag = d3.behavior.drag();
+drag.on('dragend', function(){
+    planet.plugins.autorotate.pause();
+    d3.select('#year').text(slider[0][0].value);
+    getGeoJSON(currentYear);
+    setTimeout(function() {planet.plugins.autorotate.resume();}, 6500);
+})
+slider.call(drag);
+console.log(slider);
+
+/*slider.call(
+    d3.slider().
+      axis(true)
+      .min(1850)
+      .max(2013)
+      .step(1));
+slider.on("dragend", function(value) {
     planet.plugins.autorotate.pause();
     d3.select('body').select('#globe').attr('display', 'none');
 
     d3.select('#year').text(value);   
     currentYear = value;
-    
-    try{
-        getGeoJSON(currentYear);
-    }
-    catch(e){
-        alert("Error loading data: ", e);
-    }
+    //getGeoJSON(currentYear);
     planet.plugins.autorotate.resume();
-})*/); console.log(d3.slider().axis(true).min(1850).max(2013).step(1));
+}); //console.log(d3.slider().axis(true).min(1850).max(2013).step(1));*/
 
 
 

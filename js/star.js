@@ -1,4 +1,4 @@
-var star_limit = (screen.width/512);
+var star_limit = (screen.width/128);
 body = document.body;
 function starPlace(){
     for(var i = 0; i <= star_limit; i++){

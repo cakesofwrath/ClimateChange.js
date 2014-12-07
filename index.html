@@ -28,7 +28,7 @@
             height: 30px;
             top: 15px;
             left: 15px;
-            font-size: 30px;
+            font-size: 50px;
             fill: white;
             color: white;
             
@@ -50,7 +50,8 @@
     </style>
     <div id="year">1850</div>
     <canvas id='globe' ></canvas>
-    <div id='slider'></div>
+    <!--<div id='slider'></div>-->
+    <input id="slider" type="range" name="points" min="1850" max="2013" step="1" value="1850">
     <script src="js/globe.js" type="text/javascript" charset="utf-8"></script> <!-- This is here b/c the js references the body explicitly or something -->
     <script src="js/star.js" type="text/javascript" charset="utf-8"></script>
     <script>
