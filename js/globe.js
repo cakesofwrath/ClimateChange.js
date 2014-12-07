@@ -8,13 +8,9 @@ var avgGeoJSONData = {}; //single year's geojson
 
 var geoJSONData = {};
 
-<<<<<<< HEAD
 var currentYear = 1850;
 
 //getRawData();
-=======
-getRawData();
->>>>>>> 39a609279711c3108ac7c589f2be784f0a73bcdd
 
 /*
     Should be only run once or twice to get the raw data for processing.
@@ -41,11 +37,6 @@ var getGeoJSON = function(year) {
     });
 };
 
-<<<<<<< HEAD
-
-=======
-//getGeoJSON(2013);
->>>>>>> 39a609279711c3108ac7c589f2be784f0a73bcdd
 
 /*
     Preconditions: data and schema are CRUTData and CRUTSchema, basically.
@@ -528,4 +519,4 @@ slider.call(d3.slider().axis(true).min(1850).max(2013).step(1).on("slide", funct
     }
 }))
 
-getGeoJSON(2013);
+getGeoJSON(1850);
