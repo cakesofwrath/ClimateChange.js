@@ -249,7 +249,7 @@ var somePlugin = function(planet) {
       planet.path.context(context)(features);
       context.fillStyle = 'blue';
       context.lineWidth = .03;
-      context.fill();
+      //context.draw();
       /*var world = planet.plugins.topojson.world;
       var land = topojson.feature(world, world.objects.land);
       planet.path.context(context)(land);
@@ -268,7 +268,7 @@ function drawGlobe(){
         land:     {fill:   '#339966' },
         borders:  {stroke: '#008000' }
     }));
-    //planet.loadPlugin(autorotate(10));
+    planet.loadPlugin(autorotate(10));
     //planet.loadPlugin(drawLand(planet));
     planet.loadPlugin(planetaryjs.plugins.drag({
         onDragStart: function() {

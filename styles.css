@@ -1,0 +1,47 @@
+body{
+    background-color: #000000;
+    z-index: 0;
+}
+.star{
+    background: #EDF3FA;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    -webkit-animation: twinkling 0s;
+    -webkit-animation-iteration-count: infinite;
+    -webkit-animation-duration: 0s;
+    -webkit-animation-delay: 0s;
+    -webkit-animation-timing-function: linear;
+    -moz-animation: twinkling 0s;
+    -moz-animation-iteration-count: infinite;
+    -moz-animation-duration: 0s;
+    -moz-animation-delay: 0s;
+    -moz-animation-timing-function: linear;
+    animation: twinkling 0s;
+    animation-iteration-count: infinite;
+    animation-duration: 0s;
+    animation-delay: 0s;
+    animation-timing-function: linear;
+    z-index: -9001;
+}
+
+@-webkit-keyframes twinkling {
+    0%{transform: scale(1.0); opacity: 1.0; }
+    15%{transform: scale(0.75); opacity: 0.75; }
+    30%{transform: scale(.5); opacity: .5; }
+    45%{transform: scale(0.25);opacity: 0.25;}
+    60%{transform: scale(0);opacity: 0;}
+    75%{transform: scale(0.25);opacity: 0.25;}
+    90%{transform: scale(.5); opacity: .5; }
+    100%{transform: scale(0.75); opacity: 0.75; }
+}
+
+@-moz-keyframes twinkling {
+    0%{transform: scale(0.0); opacity: 0; }
+    25%{transform: scale(0.5); opacity: 0.5; }
+    50%{transform: scale(1); opacity: 1; }
+    75%{transform: scale(0.5); opacity: 0.5;}
+    100%{transform: scale(0); opacity: 0;}
+}
