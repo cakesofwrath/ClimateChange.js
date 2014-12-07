@@ -223,8 +223,8 @@ var autorotate = function(degreesPerSec) {
   };
 
 var colors = d3.scale.linear()
-      .domain([-3, 3])
-      .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"]);
+          .domain([-.05, .05])
+      .range(["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"].reverse());
 
 
 var CRUTtopoJSON = {};
@@ -233,28 +233,38 @@ var somePlugin = function(planet) {
   console.log(avgGeoJSONData);
   
   planet.onDraw(function() {
-    
-    
     planet.withSavedContext(function(context) {
       var world = planet.plugins.topojson.world;
-      var features = topojson.feature(CRUTtopoJSON, CRUTtopoJSON.objects.collection);
-      if(i == 0)  {
-        console.log(planet.plugins.topojson.world)
-        console.log(features);
-        i++;  
+      //var features = topojson.feature(CRUTtopoJSON, CRUTtopoJSON.objects.collection).features[1000];
+      
+      var features = avgGeoJSONData.features;
+      for(var c in avgGeoJSONData.features) {
+          var feature=features[c];
+          //console.log(c, features)
+          if(i == 0)  {
+            //console.log(planet.plugins.topojson.world)
+            console.log(feature);
+          }
+          i++;  
+          //console.log(context);
+          context.beginPath();
+          planet.path.context(context)(feature);
+          context.fillStyle = colors(avgGeoJSONData.features[c].properties.temperature_anomaly) || "grey";
+          context.strokeStyle = '#C0C0C0';
+          context.setLineWidth(.25)
+          //context.draw();
+          var world = planet.plugins.topojson.world;
+          //var land = topojson.feature(world, world.objects.land);
+          //planet.path.context(context)(land);
+          //context.fillStyle = 'white';
+          context.fill();  
       }
-      //var features = avgGeoJSONData;
-      //console.log(context);
-      context.beginPath();
-      planet.path.context(context)(features);
-      context.fillStyle = 'blue';
-      context.lineWidth = .03;
-      //context.draw();
-      /*var world = planet.plugins.topojson.world;
-      var land = topojson.feature(world, world.objects.land);
-      planet.path.context(context)(land);
-      context.fillStyle = 'white';
-      context.fill();*/
+        /*var features = avgGeoJSONData.features[1000];
+        context.beginPath();
+        planet.path.context(context)(features);
+        context.fillStyle = 'white';
+        context.fill();*/
+      
     });
   });
 };
