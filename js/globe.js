@@ -522,10 +522,16 @@ d3.select("body").append("svg")
 //var sliderAxis = d3.
 var drag = d3.behavior.drag();
 drag.on('dragend', function(){
+    d3.select("body").select('canvas')
+                    .style("opacity", 0);
+    d3.select("body").select('#lb')
+        .style("opacity", 1);
+    d3.select("body").select('#l')
+        .style("opacity", 1);
     planet.plugins.autorotate.pause();
     d3.select('#year').text(slider[0][0].value);
     getGeoJSON(currentYear);
-    setTimeout(function() {planet.plugins.autorotate.resume();}, 6500);
+    //setTimeout(function() {planet.plugins.autorotate.resume();}, 6500);
 })
 slider.call(drag);
 console.log(slider);

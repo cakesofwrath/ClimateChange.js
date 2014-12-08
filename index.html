@@ -28,7 +28,7 @@
             height: 30px;
             top: 15px;
             left: 15px;
-            font-size: 50px;
+            font-size: 30px;
             fill: white;
             color: white;
             
@@ -48,9 +48,11 @@
             z-index: -1;
         }
     </style>
+    <div class = "loader_background" id = "lb">
+        <div class = "loader" id = "l"></div>
+    </div>
     <div id="year">1850</div>
     <canvas id='globe' ></canvas>
-    <!--<div id='slider'></div>-->
     <input id="slider" type="range" name="points" min="1850" max="2013" step="1" value="1850">
     <script src="js/globe.js" type="text/javascript" charset="utf-8"></script> <!-- This is here b/c the js references the body explicitly or something -->
     <script src="js/star.js" type="text/javascript" charset="utf-8"></script>

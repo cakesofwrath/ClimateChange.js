@@ -4,11 +4,23 @@ body{
 }
 .loader{
     border-radius: 50%;
+    top: 50%;
+    left:50%;
     width: 200px;
     height: 200px;
     background: -webkit-linear-gradient(left, #E34A32, #E34A32 50%, #32CBE3 50%, #32CBE3);
     -webkit-animation: spin 3s infinite;
     animation: spin 3s infinite;
+    opacity: 0;
+    margin-left: auto;
+    margin-right: auto;
+    position: absolute;
+    z-index: 9002;
+}
+.loader_background{
+     background-color: #000000;
+     z-index: 9001;
+     opacity: 0;
 }
 @-webkit-keyframes spin {
 	from { transform: rotate(0deg); }
