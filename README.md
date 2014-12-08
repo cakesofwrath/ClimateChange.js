@@ -2,7 +2,7 @@ ClimateChange.js
 ================
 
 [Our Koding URL](http://uckk8074e3f8.cakesofwrath.koding.io/ClimateChange.js/index.html)
-For 2014 Koding Hackathon.
+
 Our submission as team cool_kid_alert for the 2014 Koding Hackathon.
 
 Pretty messy code here. 
