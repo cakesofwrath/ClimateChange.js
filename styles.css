@@ -4,10 +4,10 @@ body{
 }
 .loader{
     border-radius: 50%;
-    top: 50%;
-    left:50%;
-    width: 200px;
-    height: 200px;
+    top: 47%;
+    left:47%;
+    width: 50px;
+    height: 50px;
     background: -webkit-linear-gradient(left, #E34A32, #E34A32 50%, #32CBE3 50%, #32CBE3);
     -webkit-animation: spin 3s infinite;
     animation: spin 3s infinite;

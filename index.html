@@ -6,9 +6,7 @@
     <script src="resources/topojson.v1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="resources/planetaryjs.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="resources/FileSaver.min.js" type="text/javascript" charset="utf-8"></script>
-    <script src="resources/d3.slider.js" type="text/javascript" charset="utf-8"></script>
     <link href="styles.css" rel="stylesheet" type="text/css">
-    <link href="resources/d3.slider.css" rel="stylesheet" type="text/css" charset="utf-8">
 </head>
 <body>
     <style>
@@ -47,14 +45,81 @@
             position: absolute;
             z-index: -1;
         }
+        #info {
+            position: absolute;
+            right: 0;
+            top: 0;
+            color: white;
+            font-size: 2em;
+            height: 100%;
+            width: 400px;
+        }
+        #key {
+            position: absolute;
+            left: 15px;
+            top: 120px;
+            color: white;
+            font-size: 2em;
+            height: 80%;
+            width: 400px;
+        }
+        .colorSquare {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 1em;
+        }
+        .colorSquare:nth-child(1) {
+            background-color: #b2182b;
+        }
+        .colorSquare:nth-child(2) {
+            background-color: #d6604d;
+        }
+        .colorSquare:nth-child(3) {
+            background-color: #f4a582;
+        }
+        .colorSquare:nth-child(4) {
+            background-color: #fddbc7;
+        }
+        .colorSquare:nth-child(5) {
+            background-color: #f7f7f7;
+        }
+        .colorSquare:nth-child(6) {
+            background-color: #d1e5f0;
+        }
+        .colorSquare:nth-child(7) {
+            background-color: #92c5de;
+        }
+        .colorSquare:nth-child(8) {
+            background-color: #4393c3;
+        }
+        .colorSquare:nth-child(9) {
+            background-color: #2166ac;
+        }
     </style>
     <div class = "loader_background" id = "lb">
         <div class = "loader" id = "l"></div>
     </div>
-    <div id="year">1850</div>
+    <div id="year">2000</div>
+    <div id="key">
+        Color Key (temperature anomaly in degrees Celsius)
+        <div class="colorSquare"></div> -.8 <br>
+        <div class="colorSquare"></div> -.4 <br>
+        <div class="colorSquare"></div> 0 (or no data available) <br>
+        <div class="colorSquare"></div> .4 <br>
+        <div class="colorSquare"></div> .8 <br>
+    </div>
     <canvas id='globe' ></canvas>
-    <input id="slider" type="range" name="points" min="1850" max="2013" step="1" value="1850">
-    <script src="js/globe.js" type="text/javascript" charset="utf-8"></script> <!-- This is here b/c the js references the body explicitly or something -->
+    <input id="slider" type="range" name="points" min="1850" max="2013" step="1" value="2000">
+    <div id='info'>
+        <h3>ClimateChange.js</h3>
+        <p>This is a plot of average yearly temperature anomaly (<a href="http://www.cru.uea.ac.uk/cru/data/temperature/">HadCRUT4</a>) from the Climatic Research Unit at the University of East Anglia and the UK Met Office.</p>
+        <p>Move the slider below to view data from anywhere from 1850 to 2013.</p>
+        <p>Loading may take a second.</p>
+        <p style="position:absolute; bottom: 50px; font-size: .5em;">Best viewed in <a href="http://ultronbrowser.info/">Ultron</a></p>
+    </div>
+    <script src="js/globe.js" type="text/javascript" charset="utf-8"></script> 
     <script src="js/star.js" type="text/javascript" charset="utf-8"></script>
     <script>
         var stars = starPlace();
